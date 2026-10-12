@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -15,6 +16,7 @@ class CategoriasActivity : AppCompatActivity() {
     private lateinit var etCategoriaNombre: EditText
     private lateinit var btnGuardarCategoria: Button
     private lateinit var lvCategorias: ListView
+    private lateinit var btnBack: ImageButton
 
     private var categoriaEnEdicionId: Long? = null
     private lateinit var adapter: ArrayAdapter<String>
@@ -28,6 +30,11 @@ class CategoriasActivity : AppCompatActivity() {
         etCategoriaNombre = findViewById(R.id.etCategoriaNombre)
         btnGuardarCategoria = findViewById(R.id.btnGuardarCategoria)
         lvCategorias = findViewById(R.id.lvCategorias)
+        btnBack = findViewById(R.id.btnBack)
+
+        btnBack.setOnClickListener {
+            finish()
+        }
 
         cargarCategorias()
 

@@ -3,17 +3,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="20dp"
     android:background="@android:color/white">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Gestión de Categorías"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="@color/color_red"
-        android:layout_marginBottom="16dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Volver"
+            android:layout_marginEnd="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gestión de Categorías"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_red" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,6 +51,8 @@
             android:hint="Nombre de categoría"
             android:textColor="@color/black"
             android:textColorHint="@color/color_gray"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
             android:inputType="text"
             android:maxLines="1"
             android:autofillHints="name" />
@@ -40,6 +64,7 @@
             android:text="Guardar"
             android:backgroundTint="@color/color_cyan"
             android:textColor="@color/black"
+            android:textStyle="bold"
             android:layout_marginStart="8dp" />
     </LinearLayout>
 

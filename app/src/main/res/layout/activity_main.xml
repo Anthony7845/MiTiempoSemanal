@@ -5,24 +5,24 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="24dp"
-    android:gravity="center_horizontal"
+    android:gravity="center"
     android:background="@android:color/white">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="MiTempoSemanal"
-        android:textSize="28sp"
-        android:textStyle="bold"
+        android:layout_marginBottom="8dp"
+        android:text="Mi Tiempo Semanal"
         android:textColor="@color/color_red"
-        android:layout_marginBottom="8dp" />
+        android:textSize="32sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvDeveloperInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Desarrollador: Anieto\nVersión: v0.1.0 (1)"
-        android:textSize="14sp"
+        android:text="Desarrollador: Anthony Nieto\nVersión: v0.1.0 (1)"
+        android:textSize="15sp"
         android:textColor="@color/color_gray"
         android:gravity="center"
         android:layout_marginBottom="48dp" />
@@ -36,7 +36,7 @@
         android:textColor="@color/black"
         android:textStyle="bold"
         android:layout_marginBottom="16dp"
-        android:padding="12dp" />
+        android:padding="14dp" />
 
     <Button
         android:id="@+id/btnTareas"
@@ -46,6 +46,6 @@
         android:backgroundTint="@color/color_green"
         android:textColor="@color/black"
         android:textStyle="bold"
-        android:padding="12dp" />
+        android:padding="14dp" />
 
 </LinearLayout>

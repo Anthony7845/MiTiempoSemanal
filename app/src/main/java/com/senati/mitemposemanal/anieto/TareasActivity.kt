@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.Spinner
 import android.widget.Toast
@@ -17,6 +18,7 @@ class TareasActivity : AppCompatActivity() {
     private lateinit var spinnerCategorias: Spinner
     private lateinit var btnGuardarTarea: Button
     private lateinit var lvTareas: ListView
+    private lateinit var btnBack: ImageButton
 
     private var tareaEnEdicionId: Long? = null
     private var listaCategorias = listOf<Categoria>()
@@ -32,6 +34,11 @@ class TareasActivity : AppCompatActivity() {
         spinnerCategorias = findViewById(R.id.spinnerCategorias)
         btnGuardarTarea = findViewById(R.id.btnGuardarTarea)
         lvTareas = findViewById(R.id.lvTareas)
+        btnBack = findViewById(R.id.btnBack)
+
+        btnBack.setOnClickListener {
+            finish()
+        }
 
         cargarSpinnerCategorias()
         cargarTareas()
