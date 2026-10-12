@@ -21,11 +21,11 @@
         android:id="@+id/tvDeveloperInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Desarrollador: Anthony Nieto\nVersión: v0.1.0 (1)"
+        android:text="Desarrollador: Anthony Nieto\nVersión: v0.2.0 (2)"
         android:textSize="15sp"
         android:textColor="@color/color_gray"
         android:gravity="center"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="40dp" />
 
     <Button
         android:id="@+id/btnCategorias"
@@ -35,7 +35,7 @@
         android:backgroundTint="@color/color_cyan"
         android:textColor="@color/black"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="14dp"
         android:padding="14dp" />
 
     <Button
@@ -45,6 +45,17 @@
         android:text="Gestionar Tareas"
         android:backgroundTint="@color/color_green"
         android:textColor="@color/black"
+        android:textStyle="bold"
+        android:layout_marginBottom="14dp"
+        android:padding="14dp" />
+
+    <Button
+        android:id="@+id/btnEventos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gestionar Eventos"
+        android:backgroundTint="@color/color_red"
+        android:textColor="@android:color/white"
         android:textStyle="bold"
         android:padding="14dp" />
 

@@ -9,7 +9,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "mitemposemanal.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         const val TABLE_CATEGORIAS = "categorias"
         const val COLUMN_CATEGORIA_ID = "id"
@@ -19,6 +19,13 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         const val COLUMN_TAREA_ID = "id"
         const val COLUMN_TAREA_NOMBRE = "nombre"
         const val COLUMN_TAREA_CATEGORIA_ID = "categoria_id"
+
+        const val TABLE_EVENTOS = "eventos"
+        const val COLUMN_EVENTO_ID = "id"
+        const val COLUMN_EVENTO_TAREA_ID = "tarea_id"
+        const val COLUMN_EVENTO_INICIO = "inicio"
+        const val COLUMN_EVENTO_FIN = "fin"
+        const val COLUMN_EVENTO_DURACION = "duracion_seg"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -40,8 +47,20 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             )
         """.trimIndent()
 
+        val createTableEventos = """
+            CREATE TABLE $TABLE_EVENTOS (
+                $COLUMN_EVENTO_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_EVENTO_TAREA_ID INTEGER NOT NULL,
+                $COLUMN_EVENTO_INICIO TEXT NOT NULL,
+                $COLUMN_EVENTO_FIN TEXT,
+                $COLUMN_EVENTO_DURACION INTEGER,
+                FOREIGN KEY($COLUMN_EVENTO_TAREA_ID) REFERENCES $TABLE_TAREAS($COLUMN_TAREA_ID) ON DELETE CASCADE
+            )
+        """.trimIndent()
+
         db.execSQL(createTableCategorias)
         db.execSQL(createTableTareas)
+        db.execSQL(createTableEventos)
 
         val defaultCategories = listOf("Estudio", "Trabajo", "Descanso", "Ocio")
         for (category in defaultCategories) {
@@ -53,9 +72,20 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_TAREAS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_CATEGORIAS")
-        onCreate(db)
+        db.execSQL("PRAGMA foreign_keys = ON;")
+        if (oldVersion < 3) {
+            val createTableEventos = """
+                CREATE TABLE IF NOT EXISTS $TABLE_EVENTOS (
+                    $COLUMN_EVENTO_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    $COLUMN_EVENTO_TAREA_ID INTEGER NOT NULL,
+                    $COLUMN_EVENTO_INICIO TEXT NOT NULL,
+                    $COLUMN_EVENTO_FIN TEXT,
+                    $COLUMN_EVENTO_DURACION INTEGER,
+                    FOREIGN KEY($COLUMN_EVENTO_TAREA_ID) REFERENCES $TABLE_TAREAS($COLUMN_TAREA_ID) ON DELETE CASCADE
+                )
+            """.trimIndent()
+            db.execSQL(createTableEventos)
+        }
     }
 
     override fun onConfigure(db: SQLiteDatabase) {
@@ -196,5 +226,125 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val db = writableDatabase
         val rows = db.delete(TABLE_TAREAS, "$COLUMN_TAREA_ID = ?", arrayOf(id.toString()))
         return rows > 0
+    }
+
+    // --- Sprint 2: Eventos y Búsqueda de Tareas ---
+
+    fun searchTareas(query: String): List<Triple<Long, String, String>> {
+        val lista = mutableListOf<Triple<Long, String, String>>()
+        val db = readableDatabase
+        val sql = """
+            SELECT t.$COLUMN_TAREA_ID, t.$COLUMN_TAREA_NOMBRE, c.$COLUMN_CATEGORIA_NOMBRE
+            FROM $TABLE_TAREAS t
+            INNER JOIN $TABLE_CATEGORIAS c ON t.$COLUMN_TAREA_CATEGORIA_ID = c.$COLUMN_CATEGORIA_ID
+            WHERE t.$COLUMN_TAREA_NOMBRE LIKE ?
+            ORDER BY t.$COLUMN_TAREA_NOMBRE ASC
+        """.trimIndent()
+        val cursor = db.rawQuery(sql, arrayOf("%$query%"))
+        cursor.use {
+            if (it.moveToFirst()) {
+                do {
+                    val id = it.getLong(0)
+                    val nombre = it.getString(1)
+                    val catNombre = it.getString(2)
+                    lista.add(Triple(id, nombre, catNombre))
+                } while (it.moveToNext())
+            }
+        }
+        return lista
+    }
+
+    fun getTareaByNombre(nombre: String): Tarea? {
+        val db = readableDatabase
+        val sql = """
+            SELECT t.$COLUMN_TAREA_ID, t.$COLUMN_TAREA_NOMBRE, t.$COLUMN_TAREA_CATEGORIA_ID, c.$COLUMN_CATEGORIA_NOMBRE
+            FROM $TABLE_TAREAS t
+            INNER JOIN $TABLE_CATEGORIAS c ON t.$COLUMN_TAREA_CATEGORIA_ID = c.$COLUMN_CATEGORIA_ID
+            WHERE t.$COLUMN_TAREA_NOMBRE = ?
+        """.trimIndent()
+        val cursor = db.rawQuery(sql, arrayOf(nombre.trim()))
+        cursor.use {
+            if (it.moveToFirst()) {
+                return Tarea(it.getLong(0), it.getString(1), it.getLong(2), it.getString(3))
+            }
+        }
+        return null
+    }
+
+    fun insertEvento(tareaId: Long, inicioIso: String): Long {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_EVENTO_TAREA_ID, tareaId)
+            put(COLUMN_EVENTO_INICIO, inicioIso)
+        }
+        return db.insert(TABLE_EVENTOS, null, values)
+    }
+
+    fun getEventoEnCurso(): Evento? {
+        val db = readableDatabase
+        val sql = """
+            SELECT e.$COLUMN_EVENTO_ID, e.$COLUMN_EVENTO_TAREA_ID, t.$COLUMN_TAREA_NOMBRE, c.$COLUMN_CATEGORIA_NOMBRE, e.$COLUMN_EVENTO_INICIO, e.$COLUMN_EVENTO_FIN, e.$COLUMN_EVENTO_DURACION
+            FROM $TABLE_EVENTOS e
+            INNER JOIN $TABLE_TAREAS t ON e.$COLUMN_EVENTO_TAREA_ID = t.$COLUMN_TAREA_ID
+            INNER JOIN $TABLE_CATEGORIAS c ON t.$COLUMN_TAREA_CATEGORIA_ID = c.$COLUMN_CATEGORIA_ID
+            WHERE e.$COLUMN_EVENTO_FIN IS NULL
+            LIMIT 1
+        """.trimIndent()
+        val cursor = db.rawQuery(sql, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                return Evento(
+                    id = it.getLong(0),
+                    tareaId = it.getLong(1),
+                    tareaNombre = it.getString(2),
+                    categoriaNombre = it.getString(3),
+                    inicio = it.getString(4),
+                    fin = it.getString(5),
+                    duracionSeg = if (it.isNull(6)) null else it.getLong(6)
+                )
+            }
+        }
+        return null
+    }
+
+    fun finalizarEvento(eventoId: Long, finIso: String, duracionSeg: Long): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_EVENTO_FIN, finIso)
+            put(COLUMN_EVENTO_DURACION, duracionSeg)
+        }
+        val rows = db.update(TABLE_EVENTOS, values, "$COLUMN_EVENTO_ID = ?", arrayOf(eventoId.toString()))
+        return rows > 0
+    }
+
+    fun getAllEventos(): List<Evento> {
+        val lista = mutableListOf<Evento>()
+        val db = readableDatabase
+        val sql = """
+            SELECT e.$COLUMN_EVENTO_ID, e.$COLUMN_EVENTO_TAREA_ID, t.$COLUMN_TAREA_NOMBRE, c.$COLUMN_CATEGORIA_NOMBRE, e.$COLUMN_EVENTO_INICIO, e.$COLUMN_EVENTO_FIN, e.$COLUMN_EVENTO_DURACION
+            FROM $TABLE_EVENTOS e
+            INNER JOIN $TABLE_TAREAS t ON e.$COLUMN_EVENTO_TAREA_ID = t.$COLUMN_TAREA_ID
+            INNER JOIN $TABLE_CATEGORIAS c ON t.$COLUMN_TAREA_CATEGORIA_ID = c.$COLUMN_CATEGORIA_ID
+            ORDER BY e.$COLUMN_EVENTO_INICIO DESC
+        """.trimIndent()
+        val cursor = db.rawQuery(sql, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                do {
+                    lista.add(
+                        Evento(
+                            id = it.getLong(0),
+                            tareaId = it.getLong(1),
+                            tareaNombre = it.getString(2),
+                            categoriaNombre = it.getString(3),
+                            inicio = it.getString(4),
+                            fin = it.getString(5),
+                            duracionSeg = if (it.isNull(6)) null else it.getLong(6)
+                        )
+                    )
+                } while (it.moveToNext())
+            }
+        }
+        return lista
     }
 }

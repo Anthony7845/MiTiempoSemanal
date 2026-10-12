@@ -15,13 +15,12 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-
-
         val tvDeveloperInfo = findViewById<TextView>(R.id.tvDeveloperInfo)
-        tvDeveloperInfo.text = "Desarrollador: Anthony Nieto\nVersión: v0.1.0 (1)"
+        tvDeveloperInfo.text = "Desarrollador: Anthony Nieto\nVersión: v0.2.0 (2)"
 
         val btnCategorias = findViewById<Button>(R.id.btnCategorias)
         val btnTareas = findViewById<Button>(R.id.btnTareas)
+        val btnEventos = findViewById<Button>(R.id.btnEventos)
 
         btnCategorias.setOnClickListener {
             startActivity(Intent(this, CategoriasActivity::class.java))
@@ -29,6 +28,10 @@ class MainActivity : AppCompatActivity() {
 
         btnTareas.setOnClickListener {
             startActivity(Intent(this, TareasActivity::class.java))
+        }
+
+        btnEventos.setOnClickListener {
+            startActivity(Intent(this, EventosActivity::class.java))
         }
     }
 }
