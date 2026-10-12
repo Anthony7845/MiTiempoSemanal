@@ -1,6 +1,9 @@
 package com.senati.mitemposemanal.anieto
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -11,10 +14,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+
+
+        val tvDeveloperInfo = findViewById<TextView>(R.id.tvDeveloperInfo)
+        tvDeveloperInfo.text = "Desarrollador: Anthony Nieto\nVersión: v0.1.0 (1)"
+
+        val btnCategorias = findViewById<Button>(R.id.btnCategorias)
+        val btnTareas = findViewById<Button>(R.id.btnTareas)
+
+        btnCategorias.setOnClickListener {
+            startActivity(Intent(this, CategoriasActivity::class.java))
+        }
+
+        btnTareas.setOnClickListener {
+            startActivity(Intent(this, TareasActivity::class.java))
         }
     }
 }
