@@ -347,4 +347,31 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         return lista
     }
+
+    fun getResumenEventosSemana(inicioIso: String, finIso: String): List<CategoriaPorcentaje> {
+        val lista = mutableListOf<CategoriaPorcentaje>()
+        val db = readableDatabase
+        val sql = """
+            SELECT c.$COLUMN_CATEGORIA_NOMBRE, SUM(e.$COLUMN_EVENTO_DURACION) as total_seg
+            FROM $TABLE_CATEGORIAS c
+            LEFT JOIN $TABLE_TAREAS t ON c.$COLUMN_CATEGORIA_ID = t.$COLUMN_TAREA_CATEGORIA_ID
+            LEFT JOIN $TABLE_EVENTOS e ON t.$COLUMN_TAREA_ID = e.$COLUMN_EVENTO_TAREA_ID 
+                 AND e.$COLUMN_EVENTO_FIN IS NOT NULL
+                 AND e.$COLUMN_EVENTO_INICIO >= ? AND e.$COLUMN_EVENTO_INICIO < ?
+            GROUP BY c.$COLUMN_CATEGORIA_ID, c.$COLUMN_CATEGORIA_NOMBRE
+            ORDER BY total_seg DESC
+        """.trimIndent()
+
+        val cursor = db.rawQuery(sql, arrayOf(inicioIso, finIso))
+        cursor.use {
+            if (it.moveToFirst()) {
+                do {
+                    val catNombre = it.getString(0)
+                    val totalSeg = if (it.isNull(1)) 0L else it.getLong(1)
+                    lista.add(CategoriaPorcentaje(catNombre, totalSeg))
+                } while (it.moveToNext())
+            }
+        }
+        return lista
+    }
 }

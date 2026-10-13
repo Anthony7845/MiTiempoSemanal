@@ -4,12 +4,15 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ListView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -23,6 +26,8 @@ class EventosActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var btnBack: ImageButton
+    private lateinit var tvRangoSemana: TextView
+    private lateinit var layoutContenedorPanel: LinearLayout
     private lateinit var actvTareaBusqueda: AutoCompleteTextView
     private lateinit var tvCategoriaSeleccionada: TextView
     private lateinit var layoutEventoActivo: LinearLayout
@@ -41,6 +46,8 @@ class EventosActivity : AppCompatActivity() {
         dbHelper = DatabaseHelper(this)
 
         btnBack = findViewById(R.id.btnBack)
+        tvRangoSemana = findViewById(R.id.tvRangoSemana)
+        layoutContenedorPanel = findViewById(R.id.layoutContenedorPanel)
         actvTareaBusqueda = findViewById(R.id.actvTareaBusqueda)
         tvCategoriaSeleccionada = findViewById(R.id.tvCategoriaSeleccionada)
         layoutEventoActivo = findViewById(R.id.layoutEventoActivo)
@@ -101,12 +108,14 @@ class EventosActivity : AppCompatActivity() {
             finalizarEventoActivo()
         }
 
+        actualizarPanel()
         cargarHistorialEventos()
     }
 
     override fun onResume() {
         super.onResume()
         checkEventoActivo()
+        actualizarPanel()
         cargarHistorialEventos()
     }
 
@@ -150,6 +159,7 @@ class EventosActivity : AppCompatActivity() {
             actvTareaBusqueda.text.clear()
             tvCategoriaSeleccionada.text = "Categoría: (Ninguna)"
             checkEventoActivo()
+            actualizarPanel()
             cargarHistorialEventos()
         } else {
             Toast.makeText(this, "Error al iniciar evento", Toast.LENGTH_SHORT).show()
@@ -198,10 +208,64 @@ class EventosActivity : AppCompatActivity() {
         if (success) {
             Toast.makeText(this, "Evento finalizado con éxito", Toast.LENGTH_SHORT).show()
             checkEventoActivo()
+            actualizarPanel()
             cargarHistorialEventos()
         } else {
             Toast.makeText(this, "Error al finalizar evento", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun actualizarPanel() {
+        val (inicioSemana, finSemana, textoRango) = WeekUtils.obtenerRangoSemanaActual()
+        tvRangoSemana.text = textoRango
+
+        val resumen = dbHelper.getResumenEventosSemana(inicioSemana.toString(), finSemana.toString())
+        layoutContenedorPanel.removeAllViews()
+
+        val totalMinSemana = 10080L
+        var totalMinRegistrados = 0L
+
+        val inflater = LayoutInflater.from(this)
+
+        for (item in resumen) {
+            val minutos = item.totalSegundos / 60
+            totalMinRegistrados += minutos
+
+            val horas = minutos / 60
+            val mins = minutos % 60
+            val porcentaje = (minutos.toDouble() / totalMinSemana.toDouble()) * 100.0
+            val porcStr = String.format(java.util.Locale.US, "%.1f%%", porcentaje)
+
+            val itemView = inflater.inflate(R.layout.item_categoria_porcentaje, layoutContenedorPanel, false)
+            val tvCatNombre = itemView.findViewById<TextView>(R.id.tvCatNombre)
+            val tvCatTiempoPorcentaje = itemView.findViewById<TextView>(R.id.tvCatTiempoPorcentaje)
+            val pbCatProgreso = itemView.findViewById<ProgressBar>(R.id.pbCatProgreso)
+
+            tvCatNombre.text = item.categoriaNombre
+            tvCatTiempoPorcentaje.text = "${horas}h ${mins}m ($porcStr)"
+            pbCatProgreso.progress = (porcentaje * 10).toInt().coerceIn(0, 1000)
+
+            layoutContenedorPanel.addView(itemView)
+        }
+
+        // Fila "Sin registrar"
+        val minSinRegistrar = (totalMinSemana - totalMinRegistrados).coerceAtLeast(0L)
+        val hSin = minSinRegistrar / 60
+        val mSin = minSinRegistrar % 60
+        val porcSin = (minSinRegistrar.toDouble() / totalMinSemana.toDouble()) * 100.0
+        val porcSinStr = String.format(java.util.Locale.US, "%.1f%%", porcSin)
+
+        val itemSinView = inflater.inflate(R.layout.item_categoria_porcentaje, layoutContenedorPanel, false)
+        val tvCatNombreSin = itemSinView.findViewById<TextView>(R.id.tvCatNombre)
+        val tvCatTiempoPorCientoSin = itemSinView.findViewById<TextView>(R.id.tvCatTiempoPorcentaje)
+        val pbCatProgresoSin = itemSinView.findViewById<ProgressBar>(R.id.pbCatProgreso)
+
+        tvCatNombreSin.text = "Sin registrar"
+        tvCatTiempoPorCientoSin.text = "${hSin}h ${mSin}m ($porcSinStr)"
+        pbCatProgresoSin.progress = (porcSin * 10).toInt().coerceIn(0, 1000)
+        pbCatProgresoSin.progressTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_gray))
+
+        layoutContenedorPanel.addView(itemSinView)
     }
 
     private fun cargarHistorialEventos() {
@@ -219,5 +283,23 @@ class EventosActivity : AppCompatActivity() {
         }
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, displayList)
         lvEventos.adapter = adapter
+        setListViewHeightBasedOnChildren(lvEventos)
+    }
+
+    private fun setListViewHeightBasedOnChildren(listView: ListView) {
+        val listAdapter = listView.adapter ?: return
+        var totalHeight = 0
+        for (i in 0 until listAdapter.count) {
+            val listItem = listAdapter.getView(i, null, listView)
+            listItem.measure(
+                View.MeasureSpec.makeMeasureSpec(listView.width, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            totalHeight += listItem.measuredHeight
+        }
+        val params = listView.layoutParams
+        params.height = totalHeight + (listView.dividerHeight * (listAdapter.count - 1))
+        listView.layoutParams = params
+        listView.requestLayout()
     }
 }
