@@ -13,12 +13,16 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+        // Sprint 4: Cierre automático de semanas pendientes al abrir la app
+        DatabaseHelper(this).cerrarSemanasPendientes()
+
         val tvDeveloperInfo = findViewById<TextView>(R.id.tvDeveloperInfo)
-        tvDeveloperInfo.text = "Desarrollador: Anthony Nieto\nVersión: v0.3.0 (3)"
+        tvDeveloperInfo.text = "Desarrollador: Anthony Nieto\nVersión: v1.0.0 (4)"
 
         val btnCategorias = findViewById<Button>(R.id.btnCategorias)
         val btnTareas = findViewById<Button>(R.id.btnTareas)
         val btnEventos = findViewById<Button>(R.id.btnEventos)
+        val btnReportes = findViewById<Button>(R.id.btnReportes)
 
         btnCategorias.setOnClickListener {
             startActivity(Intent(this, CategoriasActivity::class.java))
@@ -30,6 +34,10 @@ class MainActivity : AppCompatActivity() {
 
         btnEventos.setOnClickListener {
             startActivity(Intent(this, EventosActivity::class.java))
+        }
+
+        btnReportes.setOnClickListener {
+            startActivity(Intent(this, ReportesActivity::class.java))
         }
     }
 }
